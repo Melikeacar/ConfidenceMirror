@@ -1,0 +1,23 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+backend/venv/
+frontend/venv/
+
+# --- Env files (secrets) ---
+.env
+*.env
+
+# --- Node / Vite ---
+node_modules/
+dist/
+.vite/
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

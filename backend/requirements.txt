@@ -1,0 +1,27 @@
+# FastAPI & Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Audio Processing
+pydub==0.25.1
+numpy==1.26.4
+
+# Speech-to-Text
+#faster-whisper==1.0.0
+openai-whisper
+
+
+# Semantic Analysis
+sentence-transformers==2.3.1
+scikit-learn==1.4.0
+
+# LLM - Gemini
+google-generativeai==0.3.2
+
+# Environment & Config
+python-dotenv==1.0.0
+
+# Utils
+pydantic==2.5.3
+pydantic-settings==2.1.0
