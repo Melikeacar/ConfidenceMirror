@@ -6,10 +6,15 @@ __pycache__/
 venv/
 backend/venv/
 frontend/venv/
+frontend/node_modules/
+frontend/dist/
 
 # --- Env files (secrets) ---
 .env
 *.env
+.env.*
+backend/.env
+frontend/.env
 
 # --- Node / Vite ---
 node_modules/

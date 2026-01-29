@@ -52,7 +52,7 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
     
@@ -68,17 +68,21 @@ async def health_check():
     }
 
 
-@app.post("/analyze", response_model=AnalysisResponse)
+from file_utils import extract_text_from_pptx, extract_text_from_pdf
+
+@app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_presentation(
     audio: UploadFile = File(..., description="Audio file (webm, wav, mp3)"),
-    outline_text: str = Form(..., description="Presentation outline/script")
+    outline_text: Optional[str] = Form(None, description="Presentation outline/script"),
+    outline_file: Optional[UploadFile] = File(None, description="Presentation file (pptx, pdf)")
 ):
     """
     Analyze a presentation practice session
     
     Args:
         audio: Audio recording of the practice (webm/wav/mp3)
-        outline_text: What the presentation should cover
+        outline_text: What the presentation should cover (optional if file provided)
+        outline_file: Presentation file (optional if text provided)
         
     Returns:
         Complete analysis with transcript, metrics, alignment, and feedback
@@ -86,13 +90,37 @@ async def analyze_presentation(
     
     temp_audio_path = None
     converted_wav_path = None
+    temp_outline_path = None
     
     try:
+        # Extract text from file if provided
+        final_outline_text = outline_text
+        
+        if outline_file:
+            logger.info(f"Received outline file: {outline_file.filename}")
+            suffix = os.path.splitext(outline_file.filename)[1].lower()
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+                content = await outline_file.read()
+                temp_file.write(content)
+                temp_outline_path = temp_file.name
+                
+            try:
+                if suffix == '.pptx':
+                    final_outline_text = extract_text_from_pptx(temp_outline_path)
+                elif suffix == '.pdf':
+                    final_outline_text = extract_text_from_pdf(temp_outline_path)
+                else:
+                    raise HTTPException(status_code=400, detail="Unsupported file format. Use .pptx or .pdf")
+            except Exception as e:
+                logger.error(f"File parsing error: {e}")
+                raise HTTPException(status_code=400, detail=f"Failed to parse presentation file: {str(e)}")
+        
         # Validate inputs
-        if not outline_text or len(outline_text.strip()) < 20:
+        if not final_outline_text or len(final_outline_text.strip()) < 20:
             raise HTTPException(
                 status_code=400,
-                detail="Outline text too short (minimum 20 characters)"
+                detail="Outline text too short (minimum 20 characters) or file extraction failed"
             )
         
         logger.info(f"Received audio file: {audio.filename} ({audio.content_type})")
@@ -130,11 +158,11 @@ async def analyze_presentation(
         
         # Step 3: Alignment Analysis
         logger.info("Step 3/4: Analyzing content alignment...")
-        alignment = align_transcript_to_outline(transcript, outline_text)
+        alignment = align_transcript_to_outline(transcript, final_outline_text)
         
         # Step 4: Generate Feedback
         logger.info("Step 4/4: Generating AI feedback...")
-        feedback = generate_feedback(outline_text, transcript, metrics, alignment)
+        feedback = generate_feedback(final_outline_text, transcript, metrics, alignment)
         
         # Build response
         response = AnalysisResponse(
@@ -163,6 +191,8 @@ async def analyze_presentation(
             cleanup_temp_file(temp_audio_path)
         if converted_wav_path and converted_wav_path != temp_audio_path:
             cleanup_temp_file(converted_wav_path)
+        if temp_outline_path:
+            cleanup_temp_file(temp_outline_path)
 
 
 @app.exception_handler(Exception)

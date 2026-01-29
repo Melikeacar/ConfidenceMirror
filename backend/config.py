@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     
     # API Keys
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-flash-latest"
     
     # Application
     DEBUG: bool = True
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     FILLER_WORDS_EN: str = "um,uh,like,you know,basically,actually,literally,so"
     
     class Config:
-        env_file = ".env.example"
+        env_file = ".env"
         case_sensitive = True
     
     @property

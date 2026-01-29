@@ -1,7 +1,10 @@
 import google.generativeai as genai
+from models import Feedback, FeedbackTip
 import json
 import logging
+import time
 from typing import Dict, Any
+from google.api_core import exceptions
 from models import (
     TranscriptData, 
     SpeechMetrics, 
@@ -204,26 +207,39 @@ def generate_feedback(
         
         logger.info("Generating feedback with Gemini API...")
         
-        # Call Gemini API
+        # Call Gemini API with retry logic
         model = get_gemini_model()
         
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.3,  # More deterministic
-                max_output_tokens=1000,
-            )
-        )
+        max_retries = 3
+        retry_delay = 5  # Start with 5 seconds
+        
+        response = None
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=0.3,
+                        max_output_tokens=8192,
+                        response_mime_type="application/json",
+                    )
+                )
+                break  # Success, exit loop
+                
+            except exceptions.ResourceExhausted as e:
+                if attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)  # 5, 10, 20 seconds
+                    logger.warning(f"Quota exceeded (429). Retrying in {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    logger.error("Max retries exceeded for Gemini API.")
+                    raise e
+                    
+        if not response:
+            raise RuntimeError("Failed to get response from Gemini API after retries")
         
         # Extract response text
         response_text = response.text.strip()
-        
-        # Try to extract JSON from response (in case model adds extra text)
-        json_start = response_text.find('{')
-        json_end = response_text.rfind('}') + 1
-        
-        if json_start != -1 and json_end > json_start:
-            response_text = response_text[json_start:json_end]
         
         # Parse JSON
         feedback_data = json.loads(response_text)
