@@ -241,6 +241,17 @@ def generate_feedback(
         # Extract response text
         response_text = response.text.strip()
         
+        # Clean markdown code blocks if present
+        if response_text.startswith("```"):
+            lines = response_text.splitlines()
+            # Remove first line if it starts with ```
+            if lines[0].strip().startswith("```"):
+                lines = lines[1:]
+            # Remove last line if it matches ```
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            response_text = "\n".join(lines).strip()
+            
         # Parse JSON
         feedback_data = json.loads(response_text)
         

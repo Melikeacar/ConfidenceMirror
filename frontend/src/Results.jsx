@@ -1,96 +1,517 @@
-import { ArrowLeft, Clock, Mic, Pause, FileCheck, ThumbsUp, AlertTriangle, Lightbulb } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from "react";
+import {
+    TrendingUp,
+    AlertCircle,
+    CheckCircle2,
+    Layers,
+    Mic,
+    ChevronRight,
+    Info,
+    Zap,
+    Play,
+    ArrowLeft,
+    X,
+} from "lucide-react";
 
-function Results({ data, onBack }) {
-    const metrics = [
-        { label: 'Speaking Rate', value: `${data.wpm} WPM`, status: 'Good', statusColor: 'bg-green-100 text-green-700', icon: Clock },
-        { label: 'Filler Words', value: `${data.fillerCount} total`, status: 'Improve', statusColor: 'bg-yellow-100 text-yellow-700', icon: Mic },
-        { label: 'Pauses', value: data.pauseScore, status: 'Good', statusColor: 'bg-green-100 text-green-700', icon: Pause },
-        { label: 'Alignment', value: `${data.alignmentScore}%`, status: 'Good', statusColor: 'bg-green-100 text-green-700', icon: FileCheck },
-    ];
+/**
+ * ✅ Tailwind test bandı (istersen true yap)
+ * - true: üstte kırmızı bant çıkar (Tailwind çalışıyor mu görürsün)
+ * - false: normal
+ */
+const SHOW_TW_TEST = false;
+
+const MetricCard = ({
+    title,
+    value,
+    description,
+    status,
+    icon: Icon,
+    isStar = false,
+    onStarClick,
+}) => {
+    const getStatusColor = () => {
+        if (status === "good") return "text-emerald-500 bg-emerald-50";
+        if (status === "warning") return "text-amber-500 bg-amber-50";
+        if (status === "danger") return "text-rose-500 bg-rose-50";
+        return "text-slate-500 bg-slate-50";
+    };
+
+    const getCardStyle = () => {
+        if (isStar) return "border-pink-200 bg-pink-50/30";
+        return "border-[#0f172a14] bg-white";
+    };
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center gap-4 mb-8">
-                <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ArrowLeft className="w-6 h-6 text-gray-600" />
-                </button>
-                <div>
-                    <h1 className="text-3xl font-bold">Analysis Results</h1>
-                    <p className="text-gray-500">Here's how you performed in your recording</p>
+        <div
+            className={`p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 ${getCardStyle()} relative overflow-hidden group`}
+        >
+            {isStar && (
+                <div className="absolute top-0 right-0 p-2">
+                    <div className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-md flex items-center gap-1 uppercase tracking-wider">
+                        <Zap size={10} fill="currentColor" /> Pro Feature
+                    </div>
                 </div>
+            )}
+
+            <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-xl ${getStatusColor()}`}>
+                    <Icon size={24} />
+                </div>
+                {status === "warning" && (
+                    <AlertCircle className="text-amber-400" size={20} />
+                )}
+                {status === "good" && (
+                    <CheckCircle2 className="text-emerald-400" size={20} />
+                )}
             </div>
 
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {metrics.map((metric, i) => (
-                    <div key={i} className="card flex flex-col items-center text-center p-6">
-                        <span className="text-gray-500 text-sm font-medium mb-4">{metric.label}</span>
-                        <span className="text-3xl font-bold text-gray-900 mb-4">{metric.value}</span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${metric.statusColor}`}>
-                            {metric.status}
-                        </span>
-                    </div>
-                ))}
+            <div className="space-y-1">
+                <h3 className="text-sm font-medium text-slate-500 flex items-center gap-1">
+                    {title}
+                    <Info size={14} className="opacity-40 cursor-help" />
+                </h3>
+
+                <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-slate-900">{value}</span>
+                </div>
+
+                <p
+                    className={`text-sm font-medium mt-2 ${status === "danger" ? "text-rose-600" : "text-slate-600"
+                        }`}
+                >
+                    — {description}
+                </p>
             </div>
 
-            {/* Detailed Feedback */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                {/* Strengths */}
-                <div className="card border-l-4 border-l-green-500 bg-green-50/30">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                            <ThumbsUp className="w-5 h-5" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">Strengths</h3>
-                    </div>
-                    <ul className="space-y-4">
-                        {data.strengths.map((item, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-gray-700">
-                                <span className="text-green-500 mt-0.5">✓</span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
+            {isStar && (
+                <div className="mt-4 pt-4 border-t border-slate-50">
+                    <button
+                        type="button"
+                        onClick={onStarClick}
+                        className="text-xs font-semibold text-indigo-600 flex items-center gap-1 group-hover:gap-2 transition-all"
+                    >
+                        NASIL DÜZELTİRİM? <ChevronRight size={14} />
+                    </button>
                 </div>
-
-                {/* Areas to Improve */}
-                <div className="card border-l-4 border-l-amber-500 bg-amber-50/30">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                            <AlertTriangle className="w-5 h-5" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">Areas to Improve</h3>
-                    </div>
-                    <ul className="space-y-4">
-                        {data.improvements.map((item, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-gray-700">
-                                <span className="text-amber-500 font-bold mt-0.5">–</span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Tips */}
-                <div className="card border-l-4 border-l-blue-500 bg-blue-50/30">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                            <Lightbulb className="w-5 h-5" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">Tips</h3>
-                    </div>
-                    <ul className="space-y-4">
-                        {data.tips.map((item, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-gray-700">
-                                <span className="text-blue-500 mt-0.5">💡</span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
+            )}
         </div>
     );
+};
+
+// helpers
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+function tempoDesc(wpm) {
+    if (wpm < 95) return "Biraz yavaş; kritik yerlerde hızlanabilirsin.";
+    if (wpm <= 150) return "Sakin ve dengeli bir tempo.";
+    return "Biraz hızlı; netlik için biraz yavaşlayabilirsin.";
 }
+
+function tempoStatus(wpm) {
+    if (wpm < 95) return "warning";
+    if (wpm <= 150) return "good";
+    return "warning";
+}
+
+function alignmentStatus(score) {
+    if (score >= 80) return "good";
+    if (score >= 50) return "warning";
+    return "danger";
+}
+
+function alignmentDesc(score) {
+    if (score >= 80) return "Slaytlarınla anlatımın oldukça uyumlu.";
+    if (score >= 50) return "Kısmen uyumlu; bazı yerlerde kaymalar var.";
+    return "⚠️ Hikayeniz slaytlarınızla eşleşmiyor.";
+}
+
+// fillerCount ile “enerji” türetme (basit)
+function energyScoreFromFillers(fillerCount) {
+    const score = 100 - Number(fillerCount || 0) * 6;
+    return clamp(Math.round(score), 40, 98);
+}
+
+function energyStatus(score) {
+    if (score >= 80) return "good";
+    if (score >= 60) return "warning";
+    return "danger";
+}
+
+function energyDesc(score) {
+    if (score >= 80) return "İzleyiciyi elinde tutan bir ton.";
+    if (score >= 60) return "Genel olarak iyi, ama daha canlı vurgu eklenebilir.";
+    return "Vurgu/enerji düşük; ana noktalarda güçlendirebilirsin.";
+}
+
+function confidenceScore({ alignmentScore, fillerCount, wpm }) {
+    const a = clamp(Number(alignmentScore || 0), 0, 100);
+    const fPenalty = clamp(Number(fillerCount || 0) * 3, 0, 25);
+    const w = Number(wpm || 0);
+    const tempoPenalty = w < 95 ? 8 : w > 165 ? 8 : 0;
+    return clamp(Math.round(a * 0.7 + 30 - fPenalty - tempoPenalty), 0, 100);
+}
+
+const Results = ({ data, onBack, audioFile }) => {
+    const [activeTab, setActiveTab] = useState("summary");
+    const [showPlayer, setShowPlayer] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+
+    // ✅ URL oluştur ve modal kapanınca temizle
+    const audioUrl = useMemo(() => {
+        if (!audioFile) return null;
+        return URL.createObjectURL(audioFile);
+    }, [audioFile]);
+
+    useEffect(() => {
+        return () => {
+            if (audioUrl) URL.revokeObjectURL(audioUrl);
+        };
+    }, [audioUrl]);
+
+    const mapped = useMemo(() => {
+        const wpm = Number(data?.wpm ?? 0);
+        const fillerCount = Number(data?.fillerCount ?? 0);
+        const alignment = Number(data?.alignmentScore ?? 0);
+
+        const energy = energyScoreFromFillers(fillerCount);
+        const conf = confidenceScore({ alignmentScore: alignment, fillerCount, wpm });
+
+        return {
+            wpm,
+            speakingTempoDesc: tempoDesc(wpm),
+            speakingTempoStatus: tempoStatus(wpm),
+
+            alignmentPercent: alignment,
+            alignmentDesc: alignmentDesc(alignment),
+            alignmentStatus: alignmentStatus(alignment),
+
+            energyPercent: energy,
+            energyDesc: energyDesc(energy),
+            energyStatus: energyStatus(energy),
+
+            confidenceScore: conf,
+            confidenceText:
+                alignment < 50
+                    ? "Genel duruşun iyi; ancak slayt–anlatım kopukluğu izleyicinin odağını dağıtabilir."
+                    : "Genel olarak güçlü bir duruşun var. Küçük dokunuşlarla daha da netleşebilir.",
+
+            strengths: Array.isArray(data?.strengths) ? data.strengths : [],
+            improvements: Array.isArray(data?.improvements) ? data.improvements : [],
+            tips: Array.isArray(data?.tips) ? data.tips : [],
+            fillerCount,
+            pauseScore: data?.pauseScore ?? "N/A",
+            slideAlignment: data?.slideAlignment || null,
+            debug: data?.debug || {}
+        };
+    }, [data]);
+
+    const handlePlayRecording = () => {
+        if (!audioFile) {
+            alert("Audio file bulunamadı. Analiz sayfasına dönüp tekrar yükleyebilir misin?");
+            return;
+        }
+        setShowPlayer(true);
+    };
+
+    const handleFixAlignment = () => setActiveTab("alignment");
+
+    const handleSyncWithSlides = () => {
+        if (!mapped.slideAlignment) {
+            const debugInfo = mapped.debug || {};
+            alert(`Slide alignment data is missing.\n\nDebug Info:\nFile: ${debugInfo.fileName || 'N/A'}\nDetected as PPTX: ${debugInfo.isPptx ? 'Yes' : 'No'}\n\nPlease ensure you uploaded a valid .pptx file.`);
+            return;
+        }
+        setShowSuggestions(true);
+    };
+
+    return (
+        <div className="min-h-screen bg-[#F6F8FC] p-4 md:p-8 font-sans text-slate-900">
+            <div className="max-w-7xl mx-auto">
+                {SHOW_TW_TEST && (
+                    <div className="bg-red-500 text-white p-4 rounded-xl mb-6 font-bold">
+                        TAILWIND ÇALIŞIYOR
+                    </div>
+                )}
+
+                {/* Top Bar */}
+                <div className="flex items-center justify-between mb-6">
+                    <button
+                        onClick={onBack}
+                        className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold"
+                    >
+                        <ArrowLeft size={18} /> Back to Analysis
+                    </button>
+
+                    <div className="text-xs text-slate-400">AI ANALYSIS COMPLETE</div>
+                </div>
+
+                {/* Header */}
+                <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-2">
+                        <h1 className="hero-title text-slate-900" style={{ fontSize: '2.5rem', marginBottom: '1rem', marginTop: 0 }}>
+                            Your Performance Report
+                        </h1>
+                        <p className="text-slate-500 text-lg">
+                            Great job! We analyzed your delivery style and content alignment. Here’s your breakdown.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-start md:justify-end">
+                        <button
+                            onClick={handlePlayRecording}
+                            className="flex items-center gap-2 bg-[#0B1220] text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-slate-200/50"
+                        >
+                            <Play size={18} fill="currentColor" /> Kaydı İzle
+                        </button>
+                    </div>
+                </header>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 w-full">
+                    <MetricCard
+                        title="Speaking Tempo"
+                        value={`${mapped.wpm || 0} WPM`}
+                        description={mapped.speakingTempoDesc}
+                        status={mapped.speakingTempoStatus}
+                        icon={Mic}
+                    />
+
+                    <MetricCard
+                        isStar
+                        title="Slide Alignment"
+                        value={`%${mapped.alignmentPercent}`}
+                        description={mapped.alignmentDesc}
+                        status={mapped.alignmentStatus}
+                        icon={Layers}
+                        onStarClick={handleFixAlignment}
+                    />
+
+                    <MetricCard
+                        title="Emphasis & Energy"
+                        value={`%${mapped.energyPercent}`}
+                        description={mapped.energyDesc}
+                        status={mapped.energyStatus}
+                        icon={Zap}
+                    />
+                </div>
+
+                {/* Deep Dive */}
+                <div className="bg-white rounded-3xl shadow-sm border border-[#0f172a14] overflow-hidden">
+                    <div className="p-1 flex gap-1">
+                        <button
+                            onClick={() => setActiveTab("summary")}
+                            className={`px-6 py-3 text-sm font-semibold rounded-2xl transition-all ${activeTab === "summary"
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "text-slate-500 hover:bg-slate-50"
+                                }`}
+                        >
+                            Summary Analysis
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("alignment")}
+                            className={`px-6 py-3 text-sm font-semibold rounded-2xl transition-all ${activeTab === "alignment"
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "text-slate-500 hover:bg-slate-50"
+                                }`}
+                        >
+                            Alignment Details
+                        </button>
+                    </div>
+
+                    <div className="p-8">
+                        {activeTab === "summary" ? (
+                            <div className="space-y-6">
+                                <div className="flex items-start gap-4 p-5 bg-indigo-50/50 rounded-2xl">
+                                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shrink-0">
+                                        <TrendingUp size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-900 mb-1">
+                                            Confidence Score: %{mapped.confidenceScore}
+                                        </h4>
+                                        <p className="text-slate-600 text-sm leading-relaxed">
+                                            {mapped.confidenceText}
+                                        </p>
+
+                                        <div className="mt-3 text-xs text-slate-500">
+                                            Extra: fillers <b>{mapped.fillerCount}</b>, pauses{" "}
+                                            <b>{mapped.pauseScore}</b>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-5 bg-slate-50 rounded-2xl">
+                                        <h5 className="font-bold text-slate-800 mb-2">Core Strengths</h5>
+                                        {mapped.strengths.length === 0 ? (
+                                            <div className="text-sm text-slate-500">
+                                                No strengths returned by API.
+                                            </div>
+                                        ) : (
+                                            <ul className="space-y-2 text-sm text-slate-600">
+                                                {mapped.strengths.map((s, idx) => (
+                                                    <li key={idx} className="flex items-center gap-2">
+                                                        ✅ {s}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+
+                                    <div className="p-5 bg-rose-50/50 rounded-2xl">
+                                        <h5 className="font-bold text-slate-800 mb-2">Areas to Improve</h5>
+                                        {mapped.improvements.length === 0 ? (
+                                            <div className="text-sm text-slate-500">
+                                                No improvements returned by API.
+                                            </div>
+                                        ) : (
+                                            <ul className="space-y-2 text-sm text-slate-600">
+                                                {mapped.improvements.map((s, idx) => (
+                                                    <li key={idx} className="flex items-center gap-2 text-rose-600">
+                                                        ❌ {s}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {mapped.tips.length > 0 && (
+                                    <div className="p-5 bg-amber-50/50 rounded-2xl">
+                                        <h5 className="font-bold text-slate-800 mb-2">Tips</h5>
+                                        <ul className="space-y-2 text-sm text-slate-600">
+                                            {mapped.tips.map((t, idx) => (
+                                                <li key={idx} className="flex items-center gap-2">
+                                                    💡 {t}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            // ALIGNMENT TAB CONTENT
+                            <div className="space-y-6">
+                                {!showSuggestions ? (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center space-y-4">
+                                        <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-2 animate-pulse">
+                                            <Layers size={40} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-900">Why Alignment Matters?</h3>
+                                        <p className="text-slate-500 max-w-md mx-auto">
+                                            ConfidenceMirror compares your spoken keywords with your outline in real-time. Low alignment suggests
+                                            your speech is drifting away from the intended content.
+                                        </p>
+                                        <button
+                                            onClick={handleSyncWithSlides}
+                                            className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl"
+                                        >
+                                            Sync With Slides & See Suggestions
+                                        </button>
+                                        {!mapped.slideAlignment && (
+                                            <p className="text-xs text-slate-400 mt-2">(Requires .pptx upload)</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // SLIDE SUGGESTIONS VIEW
+                                    <div className="animate-fade-in">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                <Layers className="text-indigo-600" size={20} />
+                                                Slide Coverage & Suggestions
+                                            </h3>
+                                            <button
+                                                onClick={() => setShowSuggestions(false)}
+                                                className="text-sm text-slate-500 hover:text-slate-900 underline"
+                                            >
+                                                Back to Intro
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {mapped.slideAlignment.slides.map((slide) => (
+                                                <div key={slide.slide_number} className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md">
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                                                Slide {slide.slide_number}
+                                                            </div>
+                                                            <h4 className="font-bold text-slate-800 text-lg">
+                                                                {slide.title || "Untitled Slide"}
+                                                            </h4>
+                                                        </div>
+                                                        <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                                                            ${slide.status === 'covered' ? 'bg-emerald-100 text-emerald-700' :
+                                                                slide.status === 'partial' ? 'bg-amber-100 text-amber-700' :
+                                                                    'bg-rose-100 text-rose-700'}`}>
+                                                            {slide.status}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="pl-4 border-l-2 border-slate-100 mb-4">
+                                                        <p className="text-sm text-slate-500 line-clamp-2 italic">
+                                                            {slide.bullets || "No content detected."}
+                                                        </p>
+                                                    </div>
+
+                                                    {slide.talking_points && slide.talking_points.length > 0 && (
+                                                        <div className="bg-indigo-50/50 rounded-xl p-4 mt-3">
+                                                            <div className="flex items-center gap-2 mb-2 text-indigo-700 text-sm font-bold">
+                                                                <Lightbulb size={16} /> Suggested Talking Points
+                                                            </div>
+                                                            <ul className="space-y-2">
+                                                                {slide.talking_points.map((point, idx) => (
+                                                                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
+                                                                        <span className="text-indigo-400 mt-1">•</span>
+                                                                        {point}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Player Modal */}
+            {
+                showPlayer && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                        <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                                <div className="font-bold text-slate-900">Recording</div>
+                                <button
+                                    onClick={() => setShowPlayer(false)}
+                                    className="p-2 rounded-lg hover:bg-slate-50 text-slate-600"
+                                    aria-label="Close"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="p-5">
+                                {audioUrl ? (
+                                    <audio controls className="w-full">
+                                        <source src={audioUrl} />
+                                    </audio>
+                                ) : (
+                                    <div className="text-sm text-slate-600">Audio bulunamadı.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
+    );
+};
 
 export default Results;

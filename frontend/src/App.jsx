@@ -65,30 +65,24 @@ function App() {
                                     AI-Enhanced Speech & Presentation Coach
                                 </div>
                                 <h1 className="hero-title">
-                                    Master Your Presentations<br />
-                                    <span className="text-gradient">With Confidence</span>
+                                    Reflected<br />
+                                    <span className="text-gradient">Before You Speak.</span>
                                 </h1>
                                 <p className="hero-subtitle">
-                                    Get instant, AI-powered feedback on your speech delivery, content alignment, and presentation skills. Rehearse smarter, present better.
+                                    Upload your presentation and voice.<br />
+                                    See how clearly your message lands before you step on stage.
                                 </p>
                                 <div className="hero-buttons">
                                     <button onClick={() => setView('analyze')} className="btn btn-primary btn-large">
-                                        Start Analyzing <span className="icon-spacer">✨</span>
+                                        Start Your Rehearsal <span className="icon-spacer">✨</span>
                                     </button>
                                     <button className="btn btn-outline btn-large">
-                                        <Play className="btn-icon" /> <span className="icon-spacer">Watch Demo</span>
+                                        <Play className="btn-icon" /> <span className="icon-spacer">See a Sample Analysis</span>
                                     </button>
                                 </div>
 
                                 <div className="trusted-by">
-                                    <p className="trusted-label">Trusted by professionals at</p>
-                                    <div className="trusted-logos">
-                                        <span>Google</span>
-                                        <span>Microsoft</span>
-                                        <span>Amazon</span>
-                                        <span>Meta</span>
-                                        <span>Tesla</span>
-                                    </div>
+                                    <p className="trusted-label" style={{ fontSize: '1.1rem', opacity: 0.8 }}>Designed for professionals who take their message seriously.</p>
                                 </div>
                             </div>
                         </section>
@@ -102,10 +96,10 @@ function App() {
 
                                 <div className="steps-grid">
                                     {[
-                                        { step: 1, title: 'Upload Your Recording', desc: 'Upload your presentation audio and provide your script or outline', icon: Upload },
-                                        { step: 2, title: 'AI Analysis', desc: 'Our AI analyzes your speech patterns, delivery, and content alignment', icon: Mic },
-                                        { step: 3, title: 'Get Insights', desc: 'Receive detailed metrics on pace, clarity, filler words, and more', icon: BarChart2 },
-                                        { step: 4, title: 'Improve & Practice', desc: 'Apply feedback and track your progress over time', icon: Check },
+                                        { step: 1, title: 'Share Your Practice', desc: 'Upload your voice and presentation outline.', icon: Upload },
+                                        { step: 2, title: 'We Listen Closely', desc: 'Your delivery and message are analyzed together not separately.', icon: Mic },
+                                        { step: 3, title: 'See What Works And What Doesn’t', desc: 'Clarity, focus, pacing, and alignment clearly explained.', icon: BarChart2 },
+                                        { step: 4, title: 'Refine and Rehearse', desc: 'Make adjustments and track your progress over time.', icon: Check },
                                     ].map((item) => (
                                         <div key={item.step} className="step-card">
                                             <div className="step-number">
@@ -146,8 +140,10 @@ function App() {
                                         <div className="metric-status good">Good</div>
                                     </div>
                                     <div className="metric-card">
-                                        <span className="metric-label">Alignment</span>
-                                        <span className="metric-value">92%</span>
+                                        <span className="metric-label">Alignment (Message vs Goal)</span>
+                                        <span className="metric-value">92%
+                                            <br />
+                                            Your message stays on track.</span>
                                         <div className="metric-status good">Good</div>
                                     </div>
                                 </div>
@@ -156,6 +152,9 @@ function App() {
                                         <div className="testimonial-quote">
                                             "I never realized I said 'um' every 5 seconds until I saw the data. Now my pitches are clean and hit the mark."
                                         </div>
+                                        <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                                            ConfidenceMirror doesn’t judge — it reflects.
+                                        </p>
                                         <div className="testimonial-author">
                                             <div className="author-avatar">EP</div>
                                             <div className="author-info">
@@ -290,6 +289,9 @@ function App() {
                                             <span className="amount">29</span>
                                             <span className="period">/per month</span>
                                         </div>
+                                        <p style={{ fontSize: '0.85rem', color: '#9ca3af', margin: '-0.5rem 0 1.5rem', fontStyle: 'italic' }}>
+                                            Less than one private coaching session.
+                                        </p>
                                         <button className="btn btn-primary btn-full">Start Free Trial</button>
                                         <ul className="pricing-features">
                                             <li><Check className="feature-icon" /> Unlimited analyses</li>
@@ -305,7 +307,7 @@ function App() {
                                     <div className="pricing-card">
                                         <div className="pricing-header">
                                             <h3>Team</h3>
-                                            <p>For teams and organizations</p>
+                                            <p>For teams that care about how they sound.</p>
                                         </div>
                                         <div className="pricing-price">
                                             <span className="currency">$</span>
@@ -332,8 +334,8 @@ function App() {
                     <div className="analyze-page animate-fade-in">
                         <section className="analyze-header-section">
                             <div className="container">
-                                <h1>Analyze Your Presentation</h1>
-                                <p>Upload your audio recording and provide your presentation outline to receive AI-powered feedback</p>
+                                <h1>Practice Before You Present</h1>
+                                <p>Upload your voice and outline to see how clearly your message comes across.</p>
                             </div>
                         </section>
 
@@ -402,7 +404,7 @@ function App() {
                                         <Lock className="w-5 h-5" />
                                     </div>
                                     <div className="badge-text">
-                                        <strong>Secure</strong>
+                                        <strong>Private</strong>
                                         <span>Your data is encrypted and private</span>
                                     </div>
                                 </div>
@@ -411,7 +413,7 @@ function App() {
                                         <Zap className="w-5 h-5" />
                                     </div>
                                     <div className="badge-text">
-                                        <strong>Fast</strong>
+                                        <strong>Fast Feedback</strong>
                                         <span>Results in under 2 minutes</span>
                                     </div>
                                 </div>
@@ -420,7 +422,7 @@ function App() {
                                         <Target className="w-5 h-5" />
                                     </div>
                                     <div className="badge-text">
-                                        <strong>Accurate</strong>
+                                        <strong>Objective Insights</strong>
                                         <span>AI-powered analysis</span>
                                     </div>
                                 </div>
@@ -430,9 +432,11 @@ function App() {
                 )}
 
                 {view === 'results' && analysisData && (
-                    <div className="container py-12 animate-fade-in">
-                        <Results data={analysisData} onBack={() => setView('analyze')} />
-                    </div>
+                    <Results
+                        data={analysisData}
+                        audioFile={audioFile}
+                        onBack={() => setView('analyze')}
+                    />
                 )}
             </main>
 

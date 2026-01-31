@@ -62,6 +62,31 @@ class Feedback(BaseModel):
     )
 
 
+# ============================================================================
+# NEW MODELS FOR SLIDE-BY-SLIDE ALIGNMENT (PRO FEATURE)
+# ============================================================================
+
+class SlideAlignmentDetail(BaseModel):
+    """Individual slide alignment result"""
+    slide_number: int = Field(description="Slide number (1-indexed)")
+    title: str = Field(description="Slide title")
+    bullets: str = Field(description="Key points from slide")
+    status: str = Field(description="covered | partial | missing")
+    talking_points: List[str] = Field(default=[], description="Suggested talking points (if needed)")
+    needs_suggestion: bool = Field(description="Whether this slide needs talking points")
+
+
+class SlideBySlideAlignment(BaseModel):
+    """Slide-by-slide alignment analysis (PRO feature)"""
+    slides: List[SlideAlignmentDetail] = Field(description="Analysis for each slide")
+    overall_coverage: float = Field(description="Percentage of slides covered (0-100)")
+    language: str = Field(description="Detected language (tr/en)")
+
+
+# ============================================================================
+# MAIN RESPONSE MODEL
+# ============================================================================
+
 class AnalysisResponse(BaseModel):
     """Complete analysis result"""
     transcript: TranscriptData
@@ -70,4 +95,9 @@ class AnalysisResponse(BaseModel):
     feedback: Feedback
     hitl_focus_options: List[str] = Field(
         default=["İçerik uyumu", "Hitabet & vurgu", "Hız & netlik"]
+    )
+    # NEW: Slide-by-slide alignment (optional, PRO only)
+    slide_alignment: Optional[SlideBySlideAlignment] = Field(
+        default=None,
+        description="Detailed slide-by-slide analysis (PRO feature)"
     )
