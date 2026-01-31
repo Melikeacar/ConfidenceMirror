@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
     TrendingUp,
     AlertCircle,
@@ -11,7 +11,10 @@ import {
     Play,
     ArrowLeft,
     X,
+    Lightbulb,
 } from "lucide-react";
+
+import { generateSlideDetails } from "./api";
 
 /**
  * ✅ Tailwind test bandı (istersen true yap)
@@ -151,17 +154,188 @@ function confidenceScore({ alignmentScore, fillerCount, wpm }) {
     return clamp(Math.round(a * 0.7 + 30 - fPenalty - tempoPenalty), 0, 100);
 }
 
+const SlideSkeletonCard = () => {
+    return (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-pulse">
+            {/* Header Skeleton */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-50">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-200"></div>
+                    <div className="h-6 w-48 bg-slate-200 rounded"></div>
+                </div>
+                <div className="h-6 w-24 bg-slate-200 rounded-full"></div>
+            </div>
+
+            {/* Content Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-50">
+                {/* Left Skeleton */}
+                <div className="p-6 space-y-4">
+                    <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                    <div className="h-7 w-3/4 bg-slate-200 rounded"></div>
+                    <div className="space-y-2 pt-2">
+                        <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                        <div className="h-4 w-full bg-slate-200 rounded"></div>
+                        <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
+                        <div className="h-4 w-4/6 bg-slate-200 rounded"></div>
+                    </div>
+                </div>
+
+                {/* Right Skeleton */}
+                <div className="p-6 bg-slate-50/50 space-y-4">
+                    <div className="h-6 w-40 bg-slate-200 rounded mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="flex gap-2">
+                            <div className="w-2 h-2 rounded-full bg-slate-300 mt-2"></div>
+                            <div className="h-4 w-full bg-slate-200 rounded"></div>
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="w-2 h-2 rounded-full bg-slate-300 mt-2"></div>
+                            <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="w-2 h-2 rounded-full bg-slate-300 mt-2"></div>
+                            <div className="h-4 w-4/5 bg-slate-200 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Skeleton */}
+            <div className="h-12 bg-slate-100 p-4"></div>
+        </div>
+    );
+};
+
+const SlideResultCard = ({ slide, index }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const hasLongContent = slide.bullets && slide.bullets.length > 150;
+
+    const getStatusColor = (status) => {
+        if (status === 'good') return 'bg-emerald-100 text-emerald-700';
+        if (status === 'partial') return 'bg-amber-100 text-amber-700';
+        return 'bg-rose-100 text-rose-700';
+    };
+
+    const getStatusText = (status) => {
+        if (status === 'missing') return 'Düşük Uyum';
+        if (status === 'good') return 'Yüksek Uyum';
+        if (status === 'partial') return 'Kısmi Uyum';
+        return status;
+    };
+
+    return (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-50">
+                <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm">
+                        {index + 1}
+                    </span>
+                    Slayt Analizi & Senaryo Önerisi
+                </h3>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(slide.status)}`}>
+                    {getStatusText(slide.status)}
+                </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-50">
+                {/* Left: Slide Info */}
+                <div className="p-6">
+                    <div className="mb-4">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">SLAYT BAŞLIĞI</span>
+                        <h4 className="font-bold text-slate-900 text-lg mt-1">
+                            {slide.title || "İsimsiz Slayt"}
+                        </h4>
+                    </div>
+
+                    <div>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">İÇERİK ÖZETİ</span>
+                        <div className="text-sm text-slate-600 leading-relaxed italic relative">
+                            {hasLongContent && !isExpanded
+                                ? `${slide.bullets.substring(0, 150)}...`
+                                : (slide.bullets || "İçerik tespit edilemedi.")
+                            }
+                            {hasLongContent && (
+                                <button
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    className="text-indigo-600 font-semibold hover:underline ml-1"
+                                >
+                                    {isExpanded ? "Daha az" : "Daha fazla"}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Talking Points */}
+                <div className="p-6 bg-slate-50/50">
+                    <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                        <Zap size={18} className="text-indigo-600" />
+                        Önerilen Talking Points
+                    </h4>
+
+                    {slide.talking_points && slide.talking_points.length > 0 ? (
+                        <ul className="space-y-3">
+                            {slide.talking_points.map((tp, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
+                                    <span>{tp}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-sm text-slate-400 italic">
+                            Bu slayt için özel bir öneri bulunmuyor.
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Footer: Suggestion Strip (Purple) */}
+            {slide.needs_suggestion && (
+                <div className="bg-indigo-600 text-white p-4 flex items-start md:items-center gap-3 text-sm">
+                    <Lightbulb size={18} className="text-indigo-200 shrink-0 mt-0.5 md:mt-0" />
+                    <span className="font-medium opacity-95">
+                        Öneri: Konuşmanızı bu maddeler etrafında şekillendirerek uyumu artırabilirsiniz.
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const Results = ({ data, onBack, audioFile }) => {
     const [activeTab, setActiveTab] = useState("summary");
     const [showPlayer, setShowPlayer] = useState(false);
-    const [showSuggestions, setShowSuggestions] = useState(false);
 
+    // State Machine: 'closed' | 'selecting' | 'loading' | 'ready' | 'error'
+    const [slideAnalysisStatus, setSlideAnalysisStatus] = useState("closed");
+    const [selectedSlideIds, setSelectedSlideIds] = useState(new Set());
+    const [slides, setSlides] = useState(data?.slide_alignment?.slides || []);
+    const resultsRef = useRef(null);
+
+    // Auto-scroll when results are ready
+    useEffect(() => {
+        if (slideAnalysisStatus === 'ready' && resultsRef.current) {
+            setTimeout(() => {
+                resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [slideAnalysisStatus]);
 
     // ✅ URL oluştur ve modal kapanınca temizle
     const audioUrl = useMemo(() => {
         if (!audioFile) return null;
         return URL.createObjectURL(audioFile);
     }, [audioFile]);
+
+    useEffect(() => {
+        // Update slides if data changes
+        if (data?.slide_alignment?.slides) {
+            setSlides(data.slide_alignment.slides);
+        }
+    }, [data]);
 
     useEffect(() => {
         return () => {
@@ -201,7 +375,7 @@ const Results = ({ data, onBack, audioFile }) => {
             tips: Array.isArray(data?.tips) ? data.tips : [],
             fillerCount,
             pauseScore: data?.pauseScore ?? "N/A",
-            slideAlignment: data?.slideAlignment || null,
+            // We use local state 'slides' instead of mapped.slideAlignment
             debug: data?.debug || {}
         };
     }, [data]);
@@ -217,12 +391,57 @@ const Results = ({ data, onBack, audioFile }) => {
     const handleFixAlignment = () => setActiveTab("alignment");
 
     const handleSyncWithSlides = () => {
-        if (!mapped.slideAlignment) {
+        // If no slides are available, warn user
+        const hasSlides = slides && slides.length > 0;
+
+        if (!hasSlides) {
             const debugInfo = mapped.debug || {};
-            alert(`Slide alignment data is missing.\n\nDebug Info:\nFile: ${debugInfo.fileName || 'N/A'}\nDetected as PPTX: ${debugInfo.isPptx ? 'Yes' : 'No'}\n\nPlease ensure you uploaded a valid .pptx file.`);
+            alert(`Slide data is missing.\n\nDebug Info:\nFile: ${debugInfo.fileName || 'N/A'}\nDetected as PPTX: ${debugInfo.isPptx ? 'Yes' : 'No'}\n\nPlease ensure you uploaded a valid .pptx file.`);
             return;
         }
-        setShowSuggestions(true);
+
+        // Switch to selecting state
+        setSlideAnalysisStatus("selecting");
+        // Pre-select all slides by default? Or none? Let's select all initially for convenience.
+        // const allIds = new Set(slides.map(s => s.slide_number));
+        // setSelectedSlideIds(allIds);
+    };
+
+    const toggleSlideSelection = (slideNumber) => {
+        const newSet = new Set(selectedSlideIds);
+        if (newSet.has(slideNumber)) {
+            newSet.delete(slideNumber);
+        } else {
+            newSet.add(slideNumber);
+        }
+        setSelectedSlideIds(newSet);
+    };
+
+    const handleAnalyzeSelected = async () => {
+        if (selectedSlideIds.size === 0) {
+            alert("Lütfen en az bir slayt seçin.");
+            return;
+        }
+        setSlideAnalysisStatus("loading");
+
+        try {
+            // Prepare context data for the API
+            const contextData = {
+                transcript: data.transcript,
+                slides: slides
+            };
+
+            // Call the API (simulated for now)
+            await generateSlideDetails(selectedSlideIds, contextData);
+
+            // On success, show results
+            setSlideAnalysisStatus("ready");
+        } catch (error) {
+            console.error("Analysis error:", error);
+            // Optional: set error state
+            alert("Analiz sırasında bir hata oluştu.");
+            setSlideAnalysisStatus("closed"); // or stay in selecting
+        }
     };
 
     return (
@@ -392,8 +611,9 @@ const Results = ({ data, onBack, audioFile }) => {
                             </div>
                         ) : (
                             // ALIGNMENT TAB CONTENT
+                            // ALIGNMENT TAB CONTENT
                             <div className="space-y-6">
-                                {!showSuggestions ? (
+                                {slideAnalysisStatus === 'closed' && (
                                     <div className="flex flex-col items-center justify-center py-10 text-center space-y-4">
                                         <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-2 animate-pulse">
                                             <Layers size={40} />
@@ -413,65 +633,136 @@ const Results = ({ data, onBack, audioFile }) => {
                                             <p className="text-xs text-slate-400 mt-2">(Requires .pptx upload)</p>
                                         )}
                                     </div>
-                                ) : (
-                                    // SLIDE SUGGESTIONS VIEW
+                                )}
+
+                                {slideAnalysisStatus === 'selecting' && (
                                     <div className="animate-fade-in">
+                                        <div className="flex flex-col gap-4 mb-6">
+                                            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                <Layers className="text-indigo-600" size={20} />
+                                                Slayt Seç
+                                            </h3>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            const allIds = new Set(slides.map(s => s.slide_number));
+                                                            setSelectedSlideIds(allIds);
+                                                        }}
+                                                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                                                    >
+                                                        Tümünü seç
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSelectedSlideIds(new Set())}
+                                                        className="text-xs font-semibold text-slate-500 hover:text-slate-700 underline"
+                                                    >
+                                                        Temizle
+                                                    </button>
+                                                </div>
+                                                <span className="text-xs text-slate-400">
+                                                    {selectedSlideIds.size} / {slides.length} Seçildi
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 mb-6">
+                                            {slides.map((slide) => {
+                                                const isSelected = selectedSlideIds.has(slide.slide_number);
+                                                return (
+                                                    <div
+                                                        key={slide.slide_number}
+                                                        onClick={() => toggleSlideSelection(slide.slide_number)}
+                                                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-4 group
+                                                        ${isSelected
+                                                                ? 'border-indigo-500 bg-indigo-50/30 ring-1 ring-indigo-500 shadow-md'
+                                                                : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm'}`}
+                                                    >
+                                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors
+                                                            ${isSelected ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 group-hover:border-indigo-400'}`}>
+                                                            {isSelected && <CheckCircle2 size={14} />}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                                                    Slide {slide.slide_number}
+                                                                </span>
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold
+                                                                    ${slide.status === 'covered' ? 'bg-emerald-100 text-emerald-700' :
+                                                                        slide.status === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                                                                    {slide.status}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className={`font-bold text-lg mb-1 transition-colors ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                                                {slide.title || "Untitled Slide"}
+                                                            </h4>
+                                                            <p className="text-sm text-slate-500 line-clamp-1 italic">
+                                                                {slide.bullets || "No content detected."}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                                            <button
+                                                onClick={() => setSlideAnalysisStatus('closed')}
+                                                className="flex-1 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-bold transition-all"
+                                            >
+                                                Vazgeç
+                                            </button>
+                                            <button
+                                                onClick={handleAnalyzeSelected}
+                                                disabled={selectedSlideIds.size === 0}
+                                                className={`flex-[2] py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg
+                                                    ${selectedSlideIds.size === 0
+                                                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                                        : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-xl'
+                                                    }`}
+                                            >
+                                                {selectedSlideIds.size === 0 ? "En az 1 slayt seç" : "Analizi Başlat"} <ChevronRight size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {slideAnalysisStatus === 'loading' && (
+                                    <div className="space-y-6 animate-fade-in">
+                                        <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
+                                            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                                <div className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                Analyzing Slides...
+                                            </h3>
+                                            <p className="text-slate-500 text-sm">Generating AI improvements for your selected slides.</p>
+                                        </div>
+                                        {/* Render 2 Skeletons */}
+                                        <SlideSkeletonCard />
+                                        <SlideSkeletonCard />
+                                    </div>
+                                )}
+
+                                {slideAnalysisStatus === 'ready' && (
+                                    <div ref={resultsRef} className="animate-fade-in scroll-mt-6">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                                 <Layers className="text-indigo-600" size={20} />
-                                                Slide Coverage & Suggestions
+                                                Analysis Results
                                             </h3>
                                             <button
-                                                onClick={() => setShowSuggestions(false)}
+                                                onClick={() => setSlideAnalysisStatus('selecting')}
                                                 className="text-sm text-slate-500 hover:text-slate-900 underline"
                                             >
-                                                Back to Intro
+                                                Change Selection
                                             </button>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            {mapped.slideAlignment.slides.map((slide) => (
-                                                <div key={slide.slide_number} className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md">
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div>
-                                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                                                Slide {slide.slide_number}
-                                                            </div>
-                                                            <h4 className="font-bold text-slate-800 text-lg">
-                                                                {slide.title || "Untitled Slide"}
-                                                            </h4>
-                                                        </div>
-                                                        <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                                                            ${slide.status === 'covered' ? 'bg-emerald-100 text-emerald-700' :
-                                                                slide.status === 'partial' ? 'bg-amber-100 text-amber-700' :
-                                                                    'bg-rose-100 text-rose-700'}`}>
-                                                            {slide.status}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="pl-4 border-l-2 border-slate-100 mb-4">
-                                                        <p className="text-sm text-slate-500 line-clamp-2 italic">
-                                                            {slide.bullets || "No content detected."}
-                                                        </p>
-                                                    </div>
-
-                                                    {slide.talking_points && slide.talking_points.length > 0 && (
-                                                        <div className="bg-indigo-50/50 rounded-xl p-4 mt-3">
-                                                            <div className="flex items-center gap-2 mb-2 text-indigo-700 text-sm font-bold">
-                                                                <Lightbulb size={16} /> Suggested Talking Points
-                                                            </div>
-                                                            <ul className="space-y-2">
-                                                                {slide.talking_points.map((point, idx) => (
-                                                                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                                                                        <span className="text-indigo-400 mt-1">•</span>
-                                                                        {point}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                        <div className="space-y-6">
+                                            {slides.map((slide, index) => {
+                                                if (!selectedSlideIds.has(slide.slide_number)) return null;
+                                                return <SlideResultCard key={slide.slide_number} slide={slide} index={index} />;
+                                            })}
                                         </div>
                                     </div>
                                 )}

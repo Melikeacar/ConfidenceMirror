@@ -435,6 +435,7 @@ function App() {
                     <Results
                         data={analysisData}
                         audioFile={audioFile}
+                        slides={analysisData?.slide_alignment?.slides || []}
                         onBack={() => setView('analyze')}
                     />
                 )}

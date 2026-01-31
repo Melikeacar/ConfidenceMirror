@@ -61,7 +61,7 @@ export const analyzePresentation = async (audioFile, outlineText, outlineFile) =
             improvements: data.feedback.improvements,
             tips: data.feedback.tips.map(t => `${t.section}: ${t.tip}`),
             // Pass through the new slide alignment data if it exists
-            slideAlignment: data.slide_alignment,
+            slide_alignment: data.slide_alignment,
             // Debug info
             debug: {
                 isPptx,
@@ -73,4 +73,26 @@ export const analyzePresentation = async (audioFile, outlineText, outlineFile) =
         console.error("Analysis failed:", error);
         throw error;
     }
+};
+
+export const generateSlideDetails = async (selectedSlideIds, contextData) => {
+    // contextData contains: { transcript, slides, outlineText? }
+    const payload = {
+        transcript: contextData.transcript?.text || "",
+        slides: contextData.slides.map(s => ({
+            slide_number: s.slide_number,
+            bullets: s.bullets
+        })),
+        selected_slide_numbers: Array.from(selectedSlideIds)
+    };
+
+    console.log("Generating details for slides...", payload);
+
+    // SIMULATION: In a real app, this would POST to /api/generate-suggestions
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            console.log("Suggestions generated!");
+            resolve({ success: true, count: selectedSlideIds.size });
+        }, 2000);
+    });
 };
