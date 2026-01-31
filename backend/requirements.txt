@@ -1,9 +1,9 @@
-# FastAPI & Server
+
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 
-# Audio Processing
+
 pydub==0.25.1
 numpy==1.26.4
 
